@@ -1,0 +1,104 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>女高音练声钢琴 C4–C6</title>
+<style>
+body{font-family:Arial,sans-serif;background:#f4f4f4;text-align:center;margin:20px}
+#display{font-size:28px;font-weight:bold;margin:15px}
+#piano{position:relative;width:840px;height:260px;margin:auto}
+.white{position:relative;display:inline-block;width:60px;height:240px;background:#fff;border:1px solid #333;
+box-sizing:border-box;vertical-align:top;cursor:pointer;user-select:none}
+.white span{position:absolute;bottom:8px;left:0;right:0;font-size:14px}
+.black{position:absolute;width:40px;height:150px;background:#111;color:#fff;border-radius:0 0 4px 4px;
+cursor:pointer;z-index:5}
+.black span{position:absolute;bottom:8px;left:0;right:0;font-size:12px}
+.legend{margin-top:20px}
+.good{color:#2e8b57}.train{color:#d18b00}.high{color:#b22222}
+</style>
+</head>
+<body>
+<h2>🎹 女高音练声钢琴（C4–C6）</h2>
+<div id="display">点击琴键开始</div>
+<div id="piano"></div>
+<div class="legend">
+<span class="good">● 舒适区：G4–E5</span>　
+<span class="train">● 训练区：F5–A5</span>　
+<span class="high">● 挑战区：B5–C6</span>
+</div>
+<script>
+const notes=[
+["C4",261.63],["C#4",277.18],["D4",293.66],["D#4",311.13],["E4",329.63],
+["F4",349.23],["F#4",369.99],["G4",392],["G#4",415.30],["A4",440],["A#4",466.16],["B4",493.88],
+["C5",523.25],["C#5",554.37],["D5",587.33],["D#5",622.25],["E5",659.25],
+["F5",698.46],["F#5",739.99],["G5",783.99],["G#5",830.61],["A5",880],["A#5",932.33],["B5",987.77],
+["C6",1046.50]
+];
+const whiteOrder=["C","D","E","F","G","A","B"];
+const piano=document.getElementById("piano");
+let whiteIndex=0;
+const whitePos={};
+notes.forEach(([n])=>{
+ if(!n.includes("#")){
+   let d=document.createElement("div");
+   d.className="white";
+   d.dataset.note=n;
+   d.innerHTML="<span>"+n+"</span>";
+   piano.appendChild(d);
+   whitePos[n]=whiteIndex*60;
+   whiteIndex++;
+ }
+});
+const blackAfter={"C":0,"D":1,"F":3,"G":4,"A":5};
+notes.forEach(([n,f])=>{
+ if(n.includes("#")){
+   let base=n[0]+n.slice(-1);
+   let left=(blackAfter[n[0]]+(n.endsWith("5")?7:0))*60+40;
+   if(n=="C#5") left=7*60+40;
+   if(n=="D#5") left=8*60+40;
+   if(n=="F#5") left=10*60+40;
+   if(n=="G#5") left=11*60+40;
+   if(n=="A#5") left=12*60+40;
+   let b=document.createElement("div");
+   b.className="black";
+   b.style.left=left+"px";
+   b.dataset.note=n;
+   b.innerHTML="<span>"+n+"</span>";
+   piano.appendChild(b);
+ }
+});
+const AudioContext=window.AudioContext||window.webkitAudioContext;
+const ctx=new AudioContext();
+let osc,gain;
+function play(freq,name){
+ stop();
+ osc=ctx.createOscillator();
+ gain=ctx.createGain();
+ osc.type="triangle";
+ osc.frequency.value=freq;
+ gain.gain.value=0.0001;
+ osc.connect(gain).connect(ctx.destination);
+ osc.start();
+ gain.gain.exponentialRampToValueAtTime(0.25,ctx.currentTime+0.02);
+ document.getElementById("display").textContent=name+"  ("+freq.toFixed(2)+" Hz)";
+}
+function stop(){
+ if(osc){
+  gain.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+0.05);
+  osc.stop(ctx.currentTime+0.06);
+  osc=null;
+ }
+}
+document.querySelectorAll(".white,.black").forEach(el=>{
+ const note=notes.find(x=>x[0]==el.dataset.note);
+ el.onmousedown=()=>play(note[1],note[0]);
+ el.onmouseup=stop;
+ el.onmouseleave=stop;
+ el.ontouchstart=(e)=>{e.preventDefault();play(note[1],note[0]);}
+ el.ontouchend=stop;
+});
+</script>
+</body>
+</html>
